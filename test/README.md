@@ -1,47 +1,35 @@
-# Sample testbench for a Tiny Tapeout project
+# Tests
 
-This is a sample testbench for a Tiny Tapeout project. It uses [cocotb](https://docs.cocotb.org/en/stable/) to drive the DUT and check the outputs.
-See below to get started or for more information, check the [website](https://tinytapeout.com/hdl/testing/).
+14 cocotb tests, run against the RTL and again against the gate level netlist.
 
-## Setting up
-
-1. Edit [Makefile](Makefile) and modify `PROJECT_SOURCES` to point to your Verilog files.
-2. Edit [tb.v](tb.v) and replace `tt_um_example` with your module name.
-
-## How to run
-
-To run the RTL simulation:
-
-```sh
-make -B
+```bash
+make            # RTL
+make GATES=yes  # gate level, needs gate_level_netlist.v from the gds action
 ```
 
-To run gatelevel simulation, first harden your project and copy `../runs/wokwi/results/final/verilog/gl/{your_module_name}.v` to `gate_level_netlist.v`.
+The testbench contains a bit-banged UART host (`UartHost` in `test.py`) that
+speaks the same `W`/`R`/`B`/`b` protocol as `ucom`, so a test reads almost the
+same as a shell session against the real chip.
 
-Then run:
+Everything is timed in **clock cycles**, not nanoseconds, so the same numbers
+hold at RTL and at the gate level.
 
-```sh
-make -B GATES=yes
-```
+| Test | What it proves |
+|---|---|
+| `test_link_and_scratch` | `ctrl.chip_id` reads 0x16, and a scratch byte round trips |
+| `test_reset_values` | every channel comes out of reset at 0x80, mode bits are sane |
+| `test_block_access` | `B`/`b` across the whole 16 byte channel section |
+| `test_center_all` | the self clearing strobe presets the section and reads back 0 |
+| `test_center_pin` | a rising edge on `ui[3]` does the same with no host |
+| `test_pin_mapping` | all 16 channels land on the right pin, checked in one 256 tick pass |
+| `test_uart_tx_en_keeps_uo0_serial` | `uo[0]` stays the UART while `ctrl.uart_tx_en` is set |
+| `test_servo_timing` | 1 ms + position pulse width, 20 ms frame |
+| `test_default_tick_rate` | the built in 10 MHz divider default really is 39 clocks |
+| `test_pwm_mode` | plain PWM duty = value / 256 |
+| `test_enable_and_chan_en` | global and per channel enables park outputs low |
+| `test_invert` | `ctrl.invert` flips every pin |
+| `test_demo_pin` | `ui[1]` sweeps, odd channels mirror even ones |
+| `test_runtime_baud_change` | the link survives being re-tuned to a new divider |
 
-If you wish to save the waveform in VCD format instead of FST format, edit tb.v to use `$dumpfile("tb.vcd");` and then run:
-
-```sh
-make -B FST=
-```
-
-This will generate `tb.vcd` instead of `tb.fst`.
-
-## How to view the waveform file
-
-Using GTKWave
-
-```sh
-gtkwave tb.fst tb.gtkw
-```
-
-Using Surfer
-
-```sh
-surfer tb.fst
-```
+If a test passes at RTL and fails at the gate level, that is a real bug, not a
+testbench problem — start with the reset and the clock.
