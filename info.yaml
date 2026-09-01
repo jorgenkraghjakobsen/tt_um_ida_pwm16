@@ -1,0 +1,55 @@
+# Tiny Tapeout project information
+project:
+  title:        "16 Channel PWM / Servo Controller"
+  author:       "Jorgen Kragh Jakobsen"
+  discord:      ""
+  description:  "16 channel RC servo / PWM generator with a UART register interface, built for the IDA Embedded open source chip design workshop"
+  language:     "Verilog"
+  clock_hz:     10000000       # 10 MHz nominal, 50 MHz selectable on ui[2]
+
+  # 16 x 8 bit position registers + UART + register bank maps to roughly
+  # 41000 um2 of sg13g2 standard cells, which sits at ~36% utilisation in 2x2.
+  tiles: "2x2"
+
+  top_module:  "tt_um_ida_pwm16"
+
+  source_files:
+    - "rb_pwm16.v"
+    - "uart_if.v"
+    - "pwm16.v"
+    - "tt_um_ida_pwm16.v"
+
+# The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
+pinout:
+  # Inputs
+  ui[0]: "UART RX (115200 8N1)"
+  ui[1]: "DEMO - run built in servo sweep"
+  ui[2]: "CLK_SEL - 0:10 MHz defaults, 1:50 MHz defaults"
+  ui[3]: "CENTER - rising edge centres all channels"
+  ui[4]: ""
+  ui[5]: ""
+  ui[6]: ""
+  ui[7]: ""
+
+  # Outputs
+  uo[0]: "UART TX (or PWM ch15)"
+  uo[1]: "PWM ch0"
+  uo[2]: "PWM ch1"
+  uo[3]: "PWM ch2"
+  uo[4]: "PWM ch3"
+  uo[5]: "PWM ch4"
+  uo[6]: "PWM ch5"
+  uo[7]: "PWM ch6"
+
+  # Bidirectional pins
+  uio[0]: "PWM ch7"
+  uio[1]: "PWM ch8"
+  uio[2]: "PWM ch9"
+  uio[3]: "PWM ch10"
+  uio[4]: "PWM ch11"
+  uio[5]: "PWM ch12"
+  uio[6]: "PWM ch13"
+  uio[7]: "PWM ch14"
+
+# Do not change!
+yaml_version: 6

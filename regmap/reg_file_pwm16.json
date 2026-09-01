@@ -1,0 +1,319 @@
+{
+  "registers": [
+    {
+      "symbol"      : "ctrl.chip_id",
+      "address"     : "0x00",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "22",
+      "readonly"    : "1",
+      "description" : "Chip id, reads 0x16"
+    },
+    {
+      "symbol"      : "ctrl.version",
+      "address"     : "0x01",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "1",
+      "readonly"    : "1",
+      "description" : "RTL version"
+    },
+    {
+      "symbol"      : "ctrl.enable",
+      "address"     : "0x02",
+      "pos"         : "0",
+      "size"        : "1",
+      "reset"       : "1",
+      "readonly"    : "0",
+      "description" : "Global PWM output enable"
+    },
+    {
+      "symbol"      : "ctrl.servo_mode",
+      "address"     : "0x02",
+      "pos"         : "1",
+      "size"        : "1",
+      "reset"       : "1",
+      "readonly"    : "0",
+      "description" : "1=RC servo pulses, 0=plain PWM"
+    },
+    {
+      "symbol"      : "ctrl.uart_tx_en",
+      "address"     : "0x02",
+      "pos"         : "2",
+      "size"        : "1",
+      "reset"       : "1",
+      "readonly"    : "0",
+      "description" : "1=uo[0] is uart_tx, 0=uo[0] is ch15"
+    },
+    {
+      "symbol"      : "ctrl.demo_en",
+      "address"     : "0x02",
+      "pos"         : "3",
+      "size"        : "1",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "Run the built in sweep generator"
+    },
+    {
+      "symbol"      : "ctrl.invert",
+      "address"     : "0x02",
+      "pos"         : "4",
+      "size"        : "1",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "Invert all PWM outputs"
+    },
+    {
+      "symbol"      : "ctrl.center_all",
+      "address"     : "0x03",
+      "pos"         : "0",
+      "size"        : "1",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "Write 1: all channels back to 50%"
+    },
+    {
+      "symbol"      : "ctrl.clk_div_com_l",
+      "address"     : "0x04",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "UART bit timer, low byte"
+    },
+    {
+      "symbol"      : "ctrl.clk_div_com_h",
+      "address"     : "0x05",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "UART bit timer, high byte"
+    },
+    {
+      "symbol"      : "ctrl.clk_div_pwm_l",
+      "address"     : "0x06",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "PWM tick divider, low byte"
+    },
+    {
+      "symbol"      : "ctrl.clk_div_pwm_h",
+      "address"     : "0x07",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "PWM tick divider, high byte"
+    },
+    {
+      "symbol"      : "ctrl.chan_en_l",
+      "address"     : "0x08",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "255",
+      "readonly"    : "0",
+      "description" : "Per channel enable, ch0-ch7"
+    },
+    {
+      "symbol"      : "ctrl.chan_en_h",
+      "address"     : "0x09",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "255",
+      "readonly"    : "0",
+      "description" : "Per channel enable, ch8-ch15"
+    },
+    {
+      "symbol"      : "ctrl.scratch",
+      "address"     : "0x0a",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "0",
+      "readonly"    : "0",
+      "description" : "Scratch register"
+    },
+    {
+      "symbol"      : "ctrl.pin_demo",
+      "address"     : "0x0b",
+      "pos"         : "0",
+      "size"        : "1",
+      "reset"       : "0",
+      "readonly"    : "1",
+      "description" : "State of ui[1] demo pin"
+    },
+    {
+      "symbol"      : "ctrl.pin_clksel",
+      "address"     : "0x0b",
+      "pos"         : "1",
+      "size"        : "1",
+      "reset"       : "0",
+      "readonly"    : "1",
+      "description" : "State of ui[2] clock select pin"
+    },
+    {
+      "symbol"      : "ctrl.pin_center",
+      "address"     : "0x0b",
+      "pos"         : "2",
+      "size"        : "1",
+      "reset"       : "0",
+      "readonly"    : "1",
+      "description" : "State of ui[3] centre pin"
+    },
+    {
+      "symbol"      : "ctrl.frame_tick",
+      "address"     : "0x0b",
+      "pos"         : "3",
+      "size"        : "1",
+      "reset"       : "0",
+      "readonly"    : "1",
+      "description" : "High during the first ms of a frame"
+    },
+    {
+      "symbol"      : "pwm.ch0",
+      "address"     : "0x10",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 0 position"
+    },
+    {
+      "symbol"      : "pwm.ch1",
+      "address"     : "0x11",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 1 position"
+    },
+    {
+      "symbol"      : "pwm.ch2",
+      "address"     : "0x12",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 2 position"
+    },
+    {
+      "symbol"      : "pwm.ch3",
+      "address"     : "0x13",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 3 position"
+    },
+    {
+      "symbol"      : "pwm.ch4",
+      "address"     : "0x14",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 4 position"
+    },
+    {
+      "symbol"      : "pwm.ch5",
+      "address"     : "0x15",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 5 position"
+    },
+    {
+      "symbol"      : "pwm.ch6",
+      "address"     : "0x16",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 6 position"
+    },
+    {
+      "symbol"      : "pwm.ch7",
+      "address"     : "0x17",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 7 position"
+    },
+    {
+      "symbol"      : "pwm.ch8",
+      "address"     : "0x18",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 8 position"
+    },
+    {
+      "symbol"      : "pwm.ch9",
+      "address"     : "0x19",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 9 position"
+    },
+    {
+      "symbol"      : "pwm.ch10",
+      "address"     : "0x1a",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 10 position"
+    },
+    {
+      "symbol"      : "pwm.ch11",
+      "address"     : "0x1b",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 11 position"
+    },
+    {
+      "symbol"      : "pwm.ch12",
+      "address"     : "0x1c",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 12 position"
+    },
+    {
+      "symbol"      : "pwm.ch13",
+      "address"     : "0x1d",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 13 position"
+    },
+    {
+      "symbol"      : "pwm.ch14",
+      "address"     : "0x1e",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 14 position"
+    },
+    {
+      "symbol"      : "pwm.ch15",
+      "address"     : "0x1f",
+      "pos"         : "0",
+      "size"        : "8",
+      "reset"       : "128",
+      "readonly"    : "0",
+      "description" : "Channel 15 position"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+// Tang Nano 9K constraints for tn_pwm16_top
+//
+// Every pin number here is taken from a build that already ran on this board
+// (fpga_template tangnano9k.cst), so nothing needs guessing.  If you want the
+// last four channels on header pins instead of the LEDs, move them here and in
+// tn_pwm16_top.v together.
+
+// 27 MHz crystal
+IO_LOC  "clk" 52;
+IO_PORT "clk" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+
+// Buttons
+IO_LOC  "btn_s1_resetb" 3;
+IO_PORT "btn_s1_resetb" IO_TYPE=LVCMOS18 PULL_MODE=UP;
+IO_LOC  "btn_s2" 4;
+IO_PORT "btn_s2" IO_TYPE=LVCMOS18 PULL_MODE=UP;
+
+// UART to the on board BL616 USB bridge
+IO_LOC  "uart_rx" 18;
+IO_PORT "uart_rx" IO_TYPE=LVCMOS33;
+IO_LOC  "uart_tx" 17;
+IO_PORT "uart_tx" IO_TYPE=LVCMOS33;
+
+// PWM ch0 .. ch10 on the header
+IO_LOC  "pwm_hdr[0]" 25;
+IO_PORT "pwm_hdr[0]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[1]" 26;
+IO_PORT "pwm_hdr[1]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[2]" 27;
+IO_PORT "pwm_hdr[2]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[3]" 28;
+IO_PORT "pwm_hdr[3]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[4]" 29;
+IO_PORT "pwm_hdr[4]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[5]" 30;
+IO_PORT "pwm_hdr[5]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[6]" 33;
+IO_PORT "pwm_hdr[6]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[7]" 34;
+IO_PORT "pwm_hdr[7]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[8]" 35;
+IO_PORT "pwm_hdr[8]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[9]" 37;
+IO_PORT "pwm_hdr[9]" DRIVE=8 IO_TYPE=LVCMOS33;
+IO_LOC  "pwm_hdr[10]" 38;
+IO_PORT "pwm_hdr[10]" DRIVE=8 IO_TYPE=LVCMOS33;
+
+// LEDs: ch11..ch14 plus two status bits
+IO_LOC  "led[0]" 10;
+IO_PORT "led[0]" DRIVE=8 IO_TYPE=LVCMOS18;
+IO_LOC  "led[1]" 11;
+IO_PORT "led[1]" DRIVE=8 IO_TYPE=LVCMOS18;
+IO_LOC  "led[2]" 13;
+IO_PORT "led[2]" DRIVE=8 IO_TYPE=LVCMOS18;
+IO_LOC  "led[3]" 14;
+IO_PORT "led[3]" DRIVE=8 IO_TYPE=LVCMOS18;
+IO_LOC  "led[4]" 15;
+IO_PORT "led[4]" DRIVE=8 IO_TYPE=LVCMOS18;
+IO_LOC  "led[5]" 16;
+IO_PORT "led[5]" DRIVE=8 IO_TYPE=LVCMOS18;

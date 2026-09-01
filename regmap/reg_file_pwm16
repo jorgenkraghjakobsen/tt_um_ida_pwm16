@@ -1,0 +1,36 @@
+// Register database generic build system
+ctrl.chip_id 0x00 0 8 22 Chip id, reads 0x16
+ctrl.version 0x01 0 8 1 RTL version
+ctrl.enable 0x02 0 1 1 Global PWM output enable
+ctrl.servo_mode 0x02 1 1 1 1=RC servo pulses, 0=plain PWM
+ctrl.uart_tx_en 0x02 2 1 1 1=uo[0] is uart_tx, 0=uo[0] is ch15
+ctrl.demo_en 0x02 3 1 0 Run the built in sweep generator
+ctrl.invert 0x02 4 1 0 Invert all PWM outputs
+ctrl.center_all 0x03 0 1 0 Write 1: all channels back to 50%
+ctrl.clk_div_com_l 0x04 0 8 0 UART bit timer, low byte
+ctrl.clk_div_com_h 0x05 0 8 0 UART bit timer, high byte
+ctrl.clk_div_pwm_l 0x06 0 8 0 PWM tick divider, low byte
+ctrl.clk_div_pwm_h 0x07 0 8 0 PWM tick divider, high byte
+ctrl.chan_en_l 0x08 0 8 255 Per channel enable, ch0-ch7
+ctrl.chan_en_h 0x09 0 8 255 Per channel enable, ch8-ch15
+ctrl.scratch 0x0a 0 8 0 Scratch register
+ctrl.pin_demo 0x0b 0 1 0 State of ui[1] demo pin
+ctrl.pin_clksel 0x0b 1 1 0 State of ui[2] clock select pin
+ctrl.pin_center 0x0b 2 1 0 State of ui[3] centre pin
+ctrl.frame_tick 0x0b 3 1 0 High during the first ms of a frame
+pwm.ch0 0x10 0 8 128 Channel 0 position
+pwm.ch1 0x11 0 8 128 Channel 1 position
+pwm.ch2 0x12 0 8 128 Channel 2 position
+pwm.ch3 0x13 0 8 128 Channel 3 position
+pwm.ch4 0x14 0 8 128 Channel 4 position
+pwm.ch5 0x15 0 8 128 Channel 5 position
+pwm.ch6 0x16 0 8 128 Channel 6 position
+pwm.ch7 0x17 0 8 128 Channel 7 position
+pwm.ch8 0x18 0 8 128 Channel 8 position
+pwm.ch9 0x19 0 8 128 Channel 9 position
+pwm.ch10 0x1a 0 8 128 Channel 10 position
+pwm.ch11 0x1b 0 8 128 Channel 11 position
+pwm.ch12 0x1c 0 8 128 Channel 12 position
+pwm.ch13 0x1d 0 8 128 Channel 13 position
+pwm.ch14 0x1e 0 8 128 Channel 14 position
+pwm.ch15 0x1f 0 8 128 Channel 15 position
