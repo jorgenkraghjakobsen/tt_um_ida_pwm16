@@ -23,6 +23,7 @@ Sixteen RC servos, one serial port, one chip. Read
 | Interface | UART 115200 8N1, `W`/`R`/`B`/`b` register protocol |
 | Clock | 10 MHz nominal, 50 MHz selectable on `ui[2]`, dividers are registers |
 | Area | ~39.5 k µm² of sg13g2 cells, 398 flops → **2x2 tiles** at ~36 % utilisation |
+| FPGA | ICE40UP5K 21 % of LCs @ 27.7 MHz · Tang Nano 9K @ 96 MHz |
 | Standalone | strap `ui[1]` and it sweeps all 16 channels with no host |
 
 ## Layout
@@ -71,12 +72,9 @@ make fpga      # Tang Nano 9K bitstream
 
 GDS, precheck, gate level tests and the ICE40UP5K bitstream for the **TT FPGA
 board (FabricFox)** all come out of the GitHub actions in `.github/workflows`.
-To put the FPGA build on the demo board:
-
-```bash
-# after the fpga workflow finishes, download the fpga_bitstream artifact, then
-python tt/tt_fpga.py configure --upload --set-default --clockrate 10000000
-```
+See [fpga/ttfpga/README.md](fpga/ttfpga/README.md) for how to get the bitstream
+onto the demo board — and note that the FPGA emulation tops out at 27.7 MHz, so
+run it at **10 MHz** with `ui[2]` low.
 
 ## Pinout
 

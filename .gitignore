@@ -16,3 +16,4 @@ test/gate_level_netlist.v
 fpga/tangnano/obj/
 sw/pwmui/pwmui
 regmap/rb_pwm16.v
+fpga/ttfpga/*.bin
