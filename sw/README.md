@@ -10,7 +10,9 @@ Everything here speaks the same four byte-oriented commands that
 | Block write  | `'B' + addr + len + data0 + data1 ...` | none             |
 | Block read   | `'b' + addr + len`                    | `data0 + data1 …` |
 
-115200 8N1 by default, on `ui[0]` (RX) and `uo[0]` (TX).
+115200 8N1 by default, on `ui[1]` (RX) and `uo[0]` (TX).  That pair is Tiny
+Tapeout's recommended UART-over-USB pinout, so the demo board's RP2040 bridges
+it to the USB-C port with no extra wiring.
 
 ## ucom, the command line
 

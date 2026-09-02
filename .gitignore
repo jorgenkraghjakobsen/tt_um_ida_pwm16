@@ -17,3 +17,6 @@ fpga/tangnano/obj/
 sw/pwmui/pwmui
 regmap/rb_pwm16.v
 fpga/ttfpga/*.bin
+
+# tt-support-tools checkout (local hardening)
+tt/

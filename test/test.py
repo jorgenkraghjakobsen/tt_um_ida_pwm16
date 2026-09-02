@@ -41,7 +41,7 @@ FRAME_TICKS = 5120           # 20 ms in ticks
 
 
 class UartHost:
-    """Bit-banged 115200 8N1 host on ui_in[0] / uo_out[0]."""
+    """Bit-banged 115200 8N1 host on ui_in[1] / uo_out[0]."""
 
     def __init__(self, dut, bit_cycles=BIT_CYCLES):
         self.dut = dut
@@ -49,7 +49,7 @@ class UartHost:
 
     def _set_rx(self, value):
         cur = int(self.dut.ui_in.value)
-        self.dut.ui_in.value = (cur & 0xFE) | (value & 1)
+        self.dut.ui_in.value = (cur & 0xFD) | ((value & 1) << 1)
 
     async def send_byte(self, value):
         self._set_rx(0)                                  # start bit
@@ -106,7 +106,7 @@ async def start_dut(dut, ui_extra=0):
     cocotb.start_soon(clock.start())
 
     dut.ena.value = 1
-    dut.ui_in.value = 0x01 | ui_extra          # uart_rx idles high
+    dut.ui_in.value = 0x02 | ui_extra          # uart_rx (ui[1]) idles high
     dut.uio_in.value = 0
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
@@ -417,16 +417,16 @@ async def test_invert(dut):
 
 @cocotb.test()
 async def test_demo_pin(dut):
-    """ui[1] runs the sweep generator with no host traffic at all."""
+    """ui[0] runs the sweep generator with no host traffic at all."""
     uart = await start_dut(dut)
     await uart.write(CTRL_DIV_PWM_L, 1)
 
     ui = int(dut.ui_in.value)
-    dut.ui_in.value = ui | (1 << 1)
+    dut.ui_in.value = ui | (1 << 0)
     await ClockCycles(dut.clk, 50)
 
     status = await uart.read(CTRL_STATUS)
-    assert status & 0x01, "ctrl.pin_demo should read the ui[1] strap"
+    assert status & 0x01, "ctrl.pin_demo should read the ui[0] strap"
 
     # even and odd channels mirror each other, so they cannot be equal
     w0 = await measure_high(dut, 0, 1)

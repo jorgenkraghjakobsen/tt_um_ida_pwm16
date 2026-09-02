@@ -49,8 +49,8 @@ module tn_pwm16_top (
     wire [7:0] uio_out;
     wire [7:0] uio_oe;
 
-    assign ui_in[0]   = uart_rx;
-    assign ui_in[1]   = ~btn_s2;      // S2 pulls low when pressed -> demo on
+    assign ui_in[0]   = ~btn_s2;      // S2 pulls low when pressed -> demo on
+    assign ui_in[1]   = uart_rx;
     assign ui_in[2]   = 1'b0;         // both divider sets are the 27 MHz ones
     assign ui_in[3]   = 1'b0;
     assign ui_in[7:4] = 4'b0000;

@@ -122,7 +122,7 @@ func buildRegMap() RegMap {
 			"Scratch register", "Free running read/write byte. Write it, read it back, the link works."},
 
 		{15, "pin_demo", "ctrl", 0x0B, 1, 0, 0, true, false,
-			"State of ui[1] demo pin", "Live value of the demo strap."},
+			"State of ui[0] demo pin", "Live value of the demo strap."},
 		{16, "pin_clksel", "ctrl", 0x0B, 1, 1, 0, true, false,
 			"State of ui[2] clock select pin", "0 = 10 MHz defaults, 1 = 50 MHz defaults."},
 		{17, "pin_center", "ctrl", 0x0B, 1, 2, 0, true, false,

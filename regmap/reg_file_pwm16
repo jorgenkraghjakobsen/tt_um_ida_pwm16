@@ -14,7 +14,7 @@ ctrl.clk_div_pwm_h 0x07 0 8 0 PWM tick divider, high byte
 ctrl.chan_en_l 0x08 0 8 255 Per channel enable, ch0-ch7
 ctrl.chan_en_h 0x09 0 8 255 Per channel enable, ch8-ch15
 ctrl.scratch 0x0a 0 8 0 Scratch register
-ctrl.pin_demo 0x0b 0 1 0 State of ui[1] demo pin
+ctrl.pin_demo 0x0b 0 1 0 State of ui[0] demo pin
 ctrl.pin_clksel 0x0b 1 1 0 State of ui[2] clock select pin
 ctrl.pin_center 0x0b 2 1 0 State of ui[3] centre pin
 ctrl.frame_tick 0x0b 3 1 0 High during the first ms of a frame

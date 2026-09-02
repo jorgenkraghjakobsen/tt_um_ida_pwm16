@@ -142,7 +142,7 @@
       "size"        : "1",
       "reset"       : "0",
       "readonly"    : "1",
-      "description" : "State of ui[1] demo pin"
+      "description" : "State of ui[0] demo pin"
     },
     {
       "symbol"      : "ctrl.pin_clksel",

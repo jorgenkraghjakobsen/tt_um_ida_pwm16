@@ -28,7 +28,7 @@ hold at RTL and at the gate level.
 | `test_pwm_mode` | plain PWM duty = value / 256 |
 | `test_enable_and_chan_en` | global and per channel enables park outputs low |
 | `test_invert` | `ctrl.invert` flips every pin |
-| `test_demo_pin` | `ui[1]` sweeps, odd channels mirror even ones |
+| `test_demo_pin` | `ui[0]` sweeps, odd channels mirror even ones |
 | `test_runtime_baud_change` | the link survives being re-tuned to a new divider |
 
 If a test passes at RTL and fails at the gate level, that is a real bug, not a

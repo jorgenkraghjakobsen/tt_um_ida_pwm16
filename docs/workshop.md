@@ -20,7 +20,7 @@ comes back.
 Three blocks, and the workshop follows them in order:
 
 ```
-        ui[0] ──► ┌──────────┐  addr/data  ┌───────────────┐  16 x 8 bit ┌────────┐ ──► 15 pins
+        ui[1] ──► ┌──────────┐  addr/data  ┌───────────────┐  16 x 8 bit ┌────────┐ ──► 15 pins
    uart_rx        │ uart_if  │ ──────────► │ rb_pwm16      │ ──────────► │ pwm16  │
         uo[0] ◄── │ protocol │ ◄────────── │ register bank │             │ engine │
    uart_tx        └──────────┘             └───────────────┘             └────────┘
@@ -162,7 +162,7 @@ ucom w pwm.ch3 0xC0          # move channel 3
 cd pwmui && go run .         # sixteen sliders at http://localhost:8080
 ```
 
-And with nothing plugged into the serial port at all: strap `ui[1]` high (S2 on
+And with nothing plugged into the serial port at all: strap `ui[0]` high (S2 on
 the Tang Nano) and every channel starts sweeping.
 
 **Wiring servos:** signal from the pin, but **5 V and ground from a separate

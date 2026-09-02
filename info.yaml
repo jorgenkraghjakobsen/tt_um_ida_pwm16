@@ -22,8 +22,8 @@ project:
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
   # Inputs
-  ui[0]: "UART RX (115200 8N1)"
-  ui[1]: "DEMO - run built in servo sweep"
+  ui[0]: "DEMO - run built in servo sweep"
+  ui[1]: "UART RX (115200 8N1)"
   ui[2]: "CLK_SEL - 0:10 MHz defaults, 1:50 MHz defaults"
   ui[3]: "CENTER - rising edge centres all channels"
   ui[4]: ""

@@ -3,13 +3,17 @@
  *
  * IDA Embedded open source chip design workshop, Tiny Tapeout IHP shuttle.
  *
- *   ui[0]  uart_rx        serial in, 115200 8N1
- *   ui[1]  demo           strap high: run the built in sweep, no host needed
+ *   ui[0]  demo           strap high: run the built in sweep, no host needed
+ *   ui[1]  uart_rx        serial in, 115200 8N1
  *   ui[2]  clk_sel        0 = 10 MHz defaults, 1 = 50 MHz defaults
  *   ui[3]  center         rising edge: reload all 16 channels with 0x80
  *   ui[7:4] unused
  *
  *   uo[0]  uart_tx        serial out  (or pwm ch15 when ctrl.uart_tx_en = 0)
+ *
+ * ui[1] RX / uo[0] TX is Tiny Tapeout's recommended UART-over-USB pin pair
+ * (option 2 of https://tinytapeout.com/specs/pinouts/), so the RP2040 on the
+ * demo board bridges this straight to the USB-C port with no extra wiring.
  *   uo[7:1] pwm ch0 .. ch6
  *   uio[7:0] pwm ch7 .. ch14      (always driven, uio_oe = 0xFF)
  *
@@ -41,7 +45,7 @@ module tt_um_ida_pwm16 #(
     wire resetb = rst_n;
 
     //=========================================================================
-    // Strap inputs.  ui[0] is the UART RX and is synchronised inside uart_if.
+    // Strap inputs.  ui[1] is the UART RX and is synchronised inside uart_if.
     //=========================================================================
     reg [2:0] strap_s1, strap_s2;
     always @(posedge clk) begin
@@ -49,11 +53,11 @@ module tt_um_ida_pwm16 #(
             strap_s1 <= 3'b000;
             strap_s2 <= 3'b000;
         end else begin
-            strap_s1 <= ui_in[3:1];
+            strap_s1 <= {ui_in[3], ui_in[2], ui_in[0]};
             strap_s2 <= strap_s1;
         end
     end
-    wire pin_demo   = strap_s2[0];   // ui[1]
+    wire pin_demo   = strap_s2[0];   // ui[0]
     wire pin_clksel = strap_s2[1];   // ui[2]
     wire pin_center = strap_s2[2];   // ui[3]
 
@@ -156,7 +160,7 @@ module tt_um_ida_pwm16 #(
         .clk                (clk),
         .resetb             (resetb),
         .bit_div            (div_com),
-        .uart_rx            (ui_in[0]),
+        .uart_rx            (ui_in[1]),
         .uart_tx            (uart_tx),
         .address            (rb_address),
         .data_write_to_reg  (rb_wdata),

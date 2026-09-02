@@ -36,7 +36,7 @@ module rb_pwm16 #(
     output wire [7:0]  ctrl__chan_en_l         ,  // Per channel enable, ch0-ch7
     output wire [7:0]  ctrl__chan_en_h         ,  // Per channel enable, ch8-ch15
     output wire [7:0]  ctrl__scratch           ,  // Scratch register
-    input  wire        ctrl__pin_demo          ,  // State of ui[1] demo pin
+    input  wire        ctrl__pin_demo          ,  // State of ui[0] demo pin
     input  wire        ctrl__pin_clksel        ,  // State of ui[2] clock select pin
     input  wire        ctrl__pin_center        ,  // State of ui[3] centre pin
     input  wire        ctrl__frame_tick        ,  // High during the first ms of a frame

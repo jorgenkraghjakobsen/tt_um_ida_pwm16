@@ -20,7 +20,7 @@
 | 0x08 | 7:0 | `ctrl.chan_en_l` | RW | 0xff | Per channel enable, ch0-ch7 |
 | 0x09 | 7:0 | `ctrl.chan_en_h` | RW | 0xff | Per channel enable, ch8-ch15 |
 | 0x0a | 7:0 | `ctrl.scratch` | RW | 0x00 | Scratch register |
-| 0x0b | 0 | `ctrl.pin_demo` | RO | 0x00 | State of ui[1] demo pin |
+| 0x0b | 0 | `ctrl.pin_demo` | RO | 0x00 | State of ui[0] demo pin |
 | 0x0b | 1 | `ctrl.pin_clksel` | RO | 0x00 | State of ui[2] clock select pin |
 | 0x0b | 2 | `ctrl.pin_center` | RO | 0x00 | State of ui[3] centre pin |
 | 0x0b | 3 | `ctrl.frame_tick` | RO | 0x00 | High during the first ms of a frame |
