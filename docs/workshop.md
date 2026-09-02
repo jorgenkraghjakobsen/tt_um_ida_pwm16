@@ -20,9 +20,9 @@ comes back.
 Three blocks, and the workshop follows them in order:
 
 ```
-        ui[1] ──► ┌──────────┐  addr/data  ┌───────────────┐  16 x 8 bit ┌────────┐ ──► 15 pins
+        ui[3] ──► ┌──────────┐  addr/data  ┌───────────────┐  16 x 8 bit ┌────────┐ ──► 15 pins
    uart_rx        │ uart_if  │ ──────────► │ rb_pwm16      │ ──────────► │ pwm16  │
-        uo[0] ◄── │ protocol │ ◄────────── │ register bank │             │ engine │
+        uo[4] ◄── │ protocol │ ◄────────── │ register bank │             │ engine │
    uart_tx        └──────────┘             └───────────────┘             └────────┘
              lab 3                    lab 2                        lab 1
 ```
@@ -129,7 +129,7 @@ Things to try:
 
 16 usable output pins, 16 channels, and the UART needs a transmitter. Work out
 the options before reading how it was resolved (`ctrl.uart_tx_en` and the mux
-on `uo[0]` in `tt_um_ida_pwm16.v`).
+on `uo[4]` in `tt_um_ida_pwm16.v`).
 
 | | pins |
 |---|---|

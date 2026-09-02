@@ -41,7 +41,7 @@ FRAME_TICKS = 5120           # 20 ms in ticks
 
 
 class UartHost:
-    """Bit-banged 115200 8N1 host on ui_in[1] / uo_out[0]."""
+    """Bit-banged 115200 8N1 host on ui_in[3] / uo_out[4]."""
 
     def __init__(self, dut, bit_cycles=BIT_CYCLES):
         self.dut = dut
@@ -49,7 +49,7 @@ class UartHost:
 
     def _set_rx(self, value):
         cur = int(self.dut.ui_in.value)
-        self.dut.ui_in.value = (cur & 0xFD) | ((value & 1) << 1)
+        self.dut.ui_in.value = (cur & 0xF7) | ((value & 1) << 3)
 
     async def send_byte(self, value):
         self._set_rx(0)                                  # start bit
@@ -67,7 +67,7 @@ class UartHost:
     async def recv_byte(self, timeout_cycles=200000):
         """Wait for a start bit on uo_out[0] and shift in one byte."""
         waited = 0
-        while int(self.dut.uo_out.value) & 1:
+        while (int(self.dut.uo_out.value) >> 4) & 1:
             await ClockCycles(self.dut.clk, 1)
             waited += 1
             assert waited < timeout_cycles, "timeout waiting for UART start bit"
@@ -75,7 +75,7 @@ class UartHost:
         await ClockCycles(self.dut.clk, self.bit + self.bit // 2)
         value = 0
         for i in range(8):
-            value |= (int(self.dut.uo_out.value) & 1) << i
+            value |= ((int(self.dut.uo_out.value) >> 4) & 1) << i
             await ClockCycles(self.dut.clk, self.bit)
         return value
 
@@ -106,7 +106,7 @@ async def start_dut(dut, ui_extra=0):
     cocotb.start_soon(clock.start())
 
     dut.ena.value = 1
-    dut.ui_in.value = 0x02 | ui_extra          # uart_rx (ui[1]) idles high
+    dut.ui_in.value = 0x08 | ui_extra          # uart_rx (ui[3]) idles high
     dut.uio_in.value = 0
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
@@ -118,15 +118,17 @@ async def start_dut(dut, ui_extra=0):
 def pins(dut):
     """Return the 16 channel values as seen on the pins, ch0 .. ch15.
 
-    ch0..ch6  -> uo_out[7:1]
+    ch0..ch3  -> uo_out[3:0]
+    ch4..ch6  -> uo_out[7:5]
     ch7..ch14 -> uio_out[7:0]
-    ch15      -> uo_out[0]   (only meaningful when ctrl.uart_tx_en = 0)
+    ch15      -> uo_out[4]   (only meaningful when ctrl.uart_tx_en = 0)
     """
     uo = int(dut.uo_out.value)
     uio = int(dut.uio_out.value)
-    out = [(uo >> (1 + i)) & 1 for i in range(7)]
+    out = [(uo >> i) & 1 for i in range(4)]
+    out += [(uo >> (5 + i)) & 1 for i in range(3)]
     out += [(uio >> i) & 1 for i in range(8)]
-    out += [uo & 1]
+    out += [(uo >> 4) & 1]
     return out
 
 
@@ -235,14 +237,14 @@ async def test_center_all(dut):
 
 @cocotb.test()
 async def test_center_pin(dut):
-    """A rising edge on ui[3] centres every channel with no host involved."""
+    """A rising edge on ui[1] centres every channel with no host involved."""
     uart = await start_dut(dut)
 
     await uart.write_block(PWM_CH0, [0x20] * 16)
     assert await uart.read(PWM_CH0 + 5) == 0x20
 
     ui = int(dut.ui_in.value)
-    dut.ui_in.value = ui | (1 << 3)
+    dut.ui_in.value = ui | (1 << 1)
     await ClockCycles(dut.clk, 20)
     dut.ui_in.value = ui
     await ClockCycles(dut.clk, 20)
@@ -266,7 +268,7 @@ async def test_pin_mapping(dut):
     duties = [16 * i + 8 for i in range(16)]        # 8, 24, ... 248
     await uart.write(CTRL_DIV_PWM_L, 1)
     await uart.write_block(PWM_CH0, duties)
-    # servo_mode = 0 and uart_tx_en = 0, so uo[0] carries ch15.  No more reads
+    # servo_mode = 0 and uart_tx_en = 0, so uo[4] carries ch15.  No more reads
     # after this point, the transmitter is disconnected from the pin.
     await uart.write(CTRL_CFG, CFG_ENABLE)
     await ClockCycles(dut.clk, 300)
@@ -286,8 +288,8 @@ async def test_pin_mapping(dut):
 
 
 @cocotb.test()
-async def test_uart_tx_en_keeps_uo0_serial(dut):
-    """While ctrl.uart_tx_en is set, uo[0] is the UART and never the PWM."""
+async def test_uart_tx_en_keeps_uo4_serial(dut):
+    """While ctrl.uart_tx_en is set, uo[4] is the UART and never the PWM."""
     uart = await start_dut(dut)
 
     await uart.write(CTRL_DIV_PWM_L, 1)
@@ -296,7 +298,7 @@ async def test_uart_tx_en_keeps_uo0_serial(dut):
     await ClockCycles(dut.clk, 300)
 
     for _ in range(600):                                    # idle UART = high
-        assert int(dut.uo_out.value) & 1 == 1, "uo[0] left the UART idle state"
+        assert (int(dut.uo_out.value) >> 4) & 1 == 1, "uo[4] left the UART idle state"
         await ClockCycles(dut.clk, 1)
 
 

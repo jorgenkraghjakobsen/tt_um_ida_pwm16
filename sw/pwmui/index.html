@@ -84,9 +84,10 @@
     <div class="channels" id="channels"></div>
     <div class="row" style="margin-top:14px">
       <span class="pins">
-        ch0–ch6 → <code>uo[7:1]</code> &nbsp;·&nbsp;
+        ch0–ch3 → <code>uo[3:0]</code> &nbsp;·&nbsp;
+        ch4–ch6 → <code>uo[7:5]</code> &nbsp;·&nbsp;
         ch7–ch14 → <code>uio[7:0]</code> &nbsp;·&nbsp;
-        ch15 → <code>uo[0]</code>, only when <code>ctrl.uart_tx_en</code> is cleared
+        ch15 → <code>uo[4]</code>, only when <code>ctrl.uart_tx_en</code> is cleared
         (which also drops the serial link, so the UI keeps it on)
       </span>
     </div>

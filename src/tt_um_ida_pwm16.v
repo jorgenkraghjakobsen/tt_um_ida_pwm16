@@ -4,18 +4,22 @@
  * IDA Embedded open source chip design workshop, Tiny Tapeout IHP shuttle.
  *
  *   ui[0]  demo           strap high: run the built in sweep, no host needed
- *   ui[1]  uart_rx        serial in, 115200 8N1
+ *   ui[1]  center         rising edge: reload all 16 channels with 0x80
  *   ui[2]  clk_sel        0 = 10 MHz defaults, 1 = 50 MHz defaults
- *   ui[3]  center         rising edge: reload all 16 channels with 0x80
+ *   ui[3]  uart_rx        serial in, 115200 8N1
  *   ui[7:4] unused
  *
- *   uo[0]  uart_tx        serial out  (or pwm ch15 when ctrl.uart_tx_en = 0)
- *
- * ui[1] RX / uo[0] TX is Tiny Tapeout's recommended UART-over-USB pin pair
- * (option 2 of https://tinytapeout.com/specs/pinouts/), so the RP2040 on the
- * demo board bridges this straight to the USB-C port with no extra wiring.
- *   uo[7:1] pwm ch0 .. ch6
+ *   uo[3:0] pwm ch0 .. ch3
+ *   uo[4]   uart_tx        serial out  (or pwm ch15 when ctrl.uart_tx_en = 0)
+ *   uo[7:5] pwm ch4 .. ch6
  *   uio[7:0] pwm ch7 .. ch14      (always driven, uio_oe = 0xFF)
+ *
+ * ui[3] RX / uo[4] TX is option 1 of Tiny Tapeout's recommended UART pinout
+ * (https://tinytapeout.com/specs/pinouts/).  On the demo board those land on
+ * RP2350 GPIO20 = UART1.tx and GPIO37 = UART1.rx, so both directions sit on a
+ * real hardware UART rather than needing PIO.  It costs nothing: the UART takes
+ * one of the 16 output pins wherever it sits, so 15 channels are pinned either
+ * way and ch15 muxes onto the TX pin.
  *
  * Copyright (c) 2026 Jorgen Kragh Jakobsen
  * SPDX-License-Identifier: Apache-2.0
@@ -45,7 +49,7 @@ module tt_um_ida_pwm16 #(
     wire resetb = rst_n;
 
     //=========================================================================
-    // Strap inputs.  ui[1] is the UART RX and is synchronised inside uart_if.
+    // Strap inputs.  ui[3] is the UART RX and is synchronised inside uart_if.
     //=========================================================================
     reg [2:0] strap_s1, strap_s2;
     always @(posedge clk) begin
@@ -53,13 +57,13 @@ module tt_um_ida_pwm16 #(
             strap_s1 <= 3'b000;
             strap_s2 <= 3'b000;
         end else begin
-            strap_s1 <= {ui_in[3], ui_in[2], ui_in[0]};
+            strap_s1 <= ui_in[2:0];
             strap_s2 <= strap_s1;
         end
     end
     wire pin_demo   = strap_s2[0];   // ui[0]
-    wire pin_clksel = strap_s2[1];   // ui[2]
-    wire pin_center = strap_s2[2];   // ui[3]
+    wire pin_center = strap_s2[1];   // ui[1]
+    wire pin_clksel = strap_s2[2];   // ui[2]
 
     // rising edge on the centre strap gives a one clock preset pulse
     reg pin_center_d;
@@ -160,7 +164,7 @@ module tt_um_ida_pwm16 #(
         .clk                (clk),
         .resetb             (resetb),
         .bit_div            (div_com),
-        .uart_rx            (ui_in[1]),
+        .uart_rx            (ui_in[3]),
         .uart_tx            (uart_tx),
         .address            (rb_address),
         .data_write_to_reg  (rb_wdata),
@@ -197,8 +201,9 @@ module tt_um_ida_pwm16 #(
     //=========================================================================
     // Pin mapping
     //=========================================================================
-    assign uo_out[0]   = ctrl__uart_tx_en ? uart_tx : pwm_out[15];
-    assign uo_out[7:1] = pwm_out[6:0];      // ch0 .. ch6
+    assign uo_out[3:0] = pwm_out[3:0];      // ch0 .. ch3
+    assign uo_out[4]   = ctrl__uart_tx_en ? uart_tx : pwm_out[15];
+    assign uo_out[7:5] = pwm_out[6:4];      // ch4 .. ch6
     assign uio_out     = pwm_out[14:7];     // ch7 .. ch14
     assign uio_oe      = 8'hFF;             // all bidir pins drive out
 

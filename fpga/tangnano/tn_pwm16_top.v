@@ -50,9 +50,9 @@ module tn_pwm16_top (
     wire [7:0] uio_oe;
 
     assign ui_in[0]   = ~btn_s2;      // S2 pulls low when pressed -> demo on
-    assign ui_in[1]   = uart_rx;
+    assign ui_in[1]   = 1'b0;         // centre strap, unused on this board
     assign ui_in[2]   = 1'b0;         // both divider sets are the 27 MHz ones
-    assign ui_in[3]   = 1'b0;
+    assign ui_in[3]   = uart_rx;
     assign ui_in[7:4] = 4'b0000;
 
     tt_um_ida_pwm16 #(
@@ -74,10 +74,10 @@ module tn_pwm16_top (
     //-------------------------------------------------------------------------
     // Pin mapping
     //-------------------------------------------------------------------------
-    assign uart_tx = uo_out[0];
+    assign uart_tx = uo_out[4];
 
-    // ch0..ch6 come out on uo[7:1], ch7..ch14 on uio[7:0]
-    assign pwm_hdr = {uio_out[3:0], uo_out[7:1]};   // ch10..ch7, ch6..ch0
+    // ch0..ch3 on uo[3:0], ch4..ch6 on uo[7:5], ch7..ch14 on uio[7:0]
+    assign pwm_hdr = {uio_out[3:0], uo_out[7:5], uo_out[3:0]};  // ch10..ch0
 
     assign led[5] = ~uio_out[7];    // ch14
     assign led[4] = ~uio_out[6];    // ch13

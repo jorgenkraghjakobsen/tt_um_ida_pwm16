@@ -25,7 +25,7 @@ module rb_pwm16 #(
     input  wire [7:0]  ctrl__version           ,  // RTL version
     output wire        ctrl__enable            ,  // Global PWM output enable
     output wire        ctrl__servo_mode        ,  // 1=RC servo pulses, 0=plain PWM
-    output wire        ctrl__uart_tx_en        ,  // 1=uo[0] is uart_tx, 0=uo[0] is ch15
+    output wire        ctrl__uart_tx_en        ,  // 1=uo[4] is uart_tx, 0=uo[4] is ch15
     output wire        ctrl__demo_en           ,  // Run the built in sweep generator
     output wire        ctrl__invert            ,  // Invert all PWM outputs
     output wire        ctrl__center_all        ,  // Write 1: all channels back to 50%
@@ -38,7 +38,7 @@ module rb_pwm16 #(
     output wire [7:0]  ctrl__scratch           ,  // Scratch register
     input  wire        ctrl__pin_demo          ,  // State of ui[0] demo pin
     input  wire        ctrl__pin_clksel        ,  // State of ui[2] clock select pin
-    input  wire        ctrl__pin_center        ,  // State of ui[3] centre pin
+    input  wire        ctrl__pin_center        ,  // State of ui[1] centre pin
     input  wire        ctrl__frame_tick        ,  // High during the first ms of a frame
 
     // --- Section pwm @ 0x10 : The 16 channel position registers
@@ -65,7 +65,7 @@ module rb_pwm16 #(
     // Section: ctrl   offset 0x00   size 16
     reg         r_ctrl__enable;            // Global PWM output enable
     reg         r_ctrl__servo_mode;        // 1=RC servo pulses, 0=plain PWM
-    reg         r_ctrl__uart_tx_en;        // 1=uo[0] is uart_tx, 0=uo[0] is ch15
+    reg         r_ctrl__uart_tx_en;        // 1=uo[4] is uart_tx, 0=uo[4] is ch15
     reg         r_ctrl__demo_en;           // Run the built in sweep generator
     reg         r_ctrl__invert;            // Invert all PWM outputs
     reg         r_ctrl__center_all;        // Write 1: all channels back to 50%

@@ -14,10 +14,10 @@ Sixteen RC servos, one serial port, one chip.
 The design is three blocks that you can lift out and reuse separately:
 
 ```
-        ui[1] ──► ┌──────────┐  addr/data  ┌──────────────┐  16 x 8 bit  ┌────────┐ ──► uo[7:1]  ch0..ch6
-   uart_rx        │ uart_if  │ ──────────► │ rb_pwm16     │ ───────────► │ pwm16  │ ──► uio[7:0] ch7..ch14
-        uo[0] ◄── │ protocol │ ◄────────── │ register bank│              │ engine │ ──► uo[0]    ch15*
-   uart_tx        └──────────┘             └──────────────┘              └────────┘
+        ui[3] ──► ┌──────────┐  addr/data  ┌───────────────┐  16 x 8 bit ┌────────┐ ──► uo[3:0]  ch0..ch3
+   uart_rx        │ uart_if  │ ──────────► │ rb_pwm16      │ ──────────► │ pwm16  │ ──► uo[7:5]  ch4..ch6
+        uo[4] ◄── │ protocol │ ◄────────── │ register bank │             │ engine │ ──► uio[7:0] ch7..ch14
+   uart_tx        └──────────┘             └───────────────┘             └────────┘ ──► uo[4]    ch15*
 ```
 
 **`uart_if`** is a 115200 8N1 UART wrapped around a four command register
@@ -80,7 +80,7 @@ default, so any other clock rate works too.
 ### Getting all sixteen channels out of sixteen pins
 
 There are 16 usable output pins and the UART needs one of them. Channels 0-14
-have a pin each; channel 15 shares `uo[0]` with the UART transmitter and takes
+have a pin each; channel 15 shares `uo[4]` with the UART transmitter and takes
 over when you clear `ctrl.uart_tx_en` - at which point you can still write
 registers, you just cannot read them back any more.
 
@@ -88,7 +88,7 @@ registers, you just cannot read them back any more.
 
 Strap `ui[0]` high and the chip runs its own slow triangle sweep across all
 sixteen channels, odd channels mirroring the even ones. No host, no driver, no
-UART. A rising edge on `ui[3]` reloads every channel with `0x80`, which is the
+UART. A rising edge on `ui[1]` reloads every channel with `0x80`, which is the
 mechanical panic button.
 
 ## Register map
@@ -103,7 +103,7 @@ mechanical panic button.
 | 0x01 | 7:0 | `ctrl.version` | RO | 0x01 | RTL revision |
 | 0x02 | 0 | `ctrl.enable` | RW | 1 | Global output enable |
 | 0x02 | 1 | `ctrl.servo_mode` | RW | 1 | 1 = RC servo pulses, 0 = plain PWM |
-| 0x02 | 2 | `ctrl.uart_tx_en` | RW | 1 | 1 = uo[0] is uart_tx, 0 = uo[0] is ch15 |
+| 0x02 | 2 | `ctrl.uart_tx_en` | RW | 1 | 1 = uo[4] is uart_tx, 0 = uo[4] is ch15 |
 | 0x02 | 3 | `ctrl.demo_en` | RW | 0 | Run the built in sweep |
 | 0x02 | 4 | `ctrl.invert` | RW | 0 | Invert every output pin |
 | 0x03 | 0 | `ctrl.center_all` | W1S | 0 | Write 1: all channels back to 0x80 |
@@ -116,7 +116,7 @@ mechanical panic button.
 | 0x0A | 7:0 | `ctrl.scratch` | RW | 0x00 | Free byte, write it and read it back |
 | 0x0B | 0 | `ctrl.pin_demo` | RO | - | Live state of the ui[0] strap |
 | 0x0B | 1 | `ctrl.pin_clksel` | RO | - | Live state of the ui[2] strap |
-| 0x0B | 2 | `ctrl.pin_center` | RO | - | Live state of the ui[3] strap |
+| 0x0B | 2 | `ctrl.pin_center` | RO | - | Live state of the ui[1] strap |
 | 0x0B | 3 | `ctrl.frame_tick` | RO | - | High during the first ms of a frame |
 
 ### `pwm` @ 0x10
@@ -128,11 +128,15 @@ mechanical panic button.
 ## How to test
 
 Set the demo board clock to **10 MHz** (or 50 MHz with `ui[2]` strapped high)
-and connect a 115200 8N1 serial port to `ui[1]` / `uo[0]`.
+and connect a 115200 8N1 serial port to `ui[3]` / `uo[4]`.
 
-`ui[1]` RX / `uo[0]` TX is [option 2 of the Tiny Tapeout recommended UART
-pinout](https://tinytapeout.com/specs/pinouts/), so on the demo board the
-RP2040 bridges the link to the board's USB-C connector - no adapter, no wiring.
+`ui[3]` RX / `uo[4]` TX is [option 1 of the Tiny Tapeout recommended UART
+pinout](https://tinytapeout.com/specs/pinouts/). On the demo board those land
+on RP2350 `GPIO20 = UART1.tx` and `GPIO37 = UART1.rx`, so both directions sit on
+a real hardware UART. (The other recommended pair, `ui[1]`/`uo[0]`, puts the
+host-to-chip direction on `GPIO18`, which has no UART TX function.) Failing any
+demo board bridge, a plain USB-serial adapter on those two header pins always
+works.
 
 **No software at all:** strap `ui[0]` high. Every channel starts sweeping.
 That alone proves the clock, the reset, the timebase and all sixteen output
@@ -157,8 +161,8 @@ every 20 ms.
 
 ## External hardware
 
-- Any 115200 8N1 serial port on `ui[1]` / `uo[0]` - the RP2040 on the TT demo
-  board bridges this pair to USB by itself, or use any USB-serial adapter.
+- Any 115200 8N1 serial port on `ui[3]` / `uo[4]` - these are the RP2350's
+  hardware UART1 pins on the TT demo board, or use any USB-serial adapter.
 - Up to 15 hobby RC servos (SG90 and friends). **Power the servos from their
   own 5 V supply**, not from the demo board, and tie the grounds together. The
   chip only drives the signal wire.

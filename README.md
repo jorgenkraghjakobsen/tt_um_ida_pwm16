@@ -9,18 +9,18 @@ Sixteen RC servos, one serial port, one chip. Read
 [docs/info.md](docs/info.md) for the datasheet.
 
 ```
-        ui[1] ──► ┌──────────┐  addr/data  ┌───────────────┐  16 x 8 bit ┌────────┐ ──► uo[7:1]  ch0..ch6
-   uart_rx        │ uart_if  │ ──────────► │ rb_pwm16      │ ──────────► │ pwm16  │ ──► uio[7:0] ch7..ch14
-        uo[0] ◄── │ protocol │ ◄────────── │ register bank │             │ engine │ ──► uo[0]    ch15*
-   uart_tx        └──────────┘             └───────────────┘             └────────┘
+        ui[3] ──► ┌──────────┐  addr/data  ┌───────────────┐  16 x 8 bit ┌────────┐ ──► uo[3:0]  ch0..ch3
+   uart_rx        │ uart_if  │ ──────────► │ rb_pwm16      │ ──────────► │ pwm16  │ ──► uo[7:5]  ch4..ch6
+        uo[4] ◄── │ protocol │ ◄────────── │ register bank │             │ engine │ ──► uio[7:0] ch7..ch14
+   uart_tx        └──────────┘             └───────────────┘             └────────┘ ──► uo[4]    ch15*
 ```
 
 | | |
 |---|---|
-| Channels | 16 (15 on dedicated pins, ch15 shares `uo[0]` with the UART TX) |
+| Channels | 16 (15 on dedicated pins, ch15 shares `uo[4]` with the UART TX) |
 | Servo frame | 20 ms, pulse 1.000–1.996 ms, 8 bit position |
 | PWM mode | duty / 256 at ~1 kHz, same registers |
-| Interface | UART 115200 8N1 on `ui[1]`/`uo[0]`, `W`/`R`/`B`/`b` register protocol |
+| Interface | UART 115200 8N1 on `ui[3]`/`uo[4]`, `W`/`R`/`B`/`b` register protocol |
 | Clock | 10 MHz nominal, 50 MHz selectable on `ui[2]`, dividers are registers |
 | Area | ~39.5 k µm² of sg13g2 cells, 398 flops → **2x2 tiles** at ~36 % utilisation |
 | FPGA | ICE40UP5K 21 % of LCs @ 27.7 MHz · Tang Nano 9K @ 96 MHz |
@@ -81,11 +81,12 @@ run it at **10 MHz** with `ui[2]` low.
 | Pin | Function |
 |-----|----------|
 | `ui[0]` | DEMO — strap high to run the built in sweep |
-| `ui[1]` | UART RX, 115200 8N1 |
+| `ui[1]` | CENTER — rising edge centres all channels |
 | `ui[2]` | CLK_SEL — 0: 10 MHz defaults, 1: 50 MHz defaults |
-| `ui[3]` | CENTER — rising edge centres all channels |
-| `uo[0]` | UART TX, or PWM ch15 when `ctrl.uart_tx_en` is cleared |
-| `uo[1..7]` | PWM ch0 … ch6 |
+| `ui[3]` | UART RX, 115200 8N1 |
+| `uo[0..3]` | PWM ch0 … ch3 |
+| `uo[4]` | UART TX, or PWM ch15 when `ctrl.uart_tx_en` is cleared |
+| `uo[5..7]` | PWM ch4 … ch6 |
 | `uio[0..7]` | PWM ch7 … ch14 (always outputs) |
 
 ## Licence

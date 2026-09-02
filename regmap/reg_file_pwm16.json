@@ -43,7 +43,7 @@
       "size"        : "1",
       "reset"       : "1",
       "readonly"    : "0",
-      "description" : "1=uo[0] is uart_tx, 0=uo[0] is ch15"
+      "description" : "1=uo[4] is uart_tx, 0=uo[4] is ch15"
     },
     {
       "symbol"      : "ctrl.demo_en",
@@ -160,7 +160,7 @@
       "size"        : "1",
       "reset"       : "0",
       "readonly"    : "1",
-      "description" : "State of ui[3] centre pin"
+      "description" : "State of ui[1] centre pin"
     },
     {
       "symbol"      : "ctrl.frame_tick",

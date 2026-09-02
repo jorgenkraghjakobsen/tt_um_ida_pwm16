@@ -95,9 +95,9 @@ func buildRegMap() RegMap {
 		{3, "servo_mode", "ctrl", 0x02, 1, 1, 1, false, false,
 			"1=RC servo pulses, 0=plain PWM", "Servo mode: 20 ms frame, 1.0-2.0 ms pulse. PWM mode: 8 bit duty at frame/20."},
 		{4, "uart_tx_en", "ctrl", 0x02, 1, 2, 1, false, false,
-			"1=uo[0] is uart_tx, 0=uo[0] is ch15", "Trade the UART transmitter for the 16th PWM channel."},
+			"1=uo[4] is uart_tx, 0=uo[4] is ch15", "Trade the UART transmitter for the 16th PWM channel."},
 		{5, "demo_en", "ctrl", 0x02, 1, 3, 0, false, false,
-			"Run the built in sweep generator", "Ignores the channel registers and sweeps all channels. Also forced by ui[1]."},
+			"Run the built in sweep generator", "Ignores the channel registers and sweeps all channels. Also forced by ui[0]."},
 		{6, "invert", "ctrl", 0x02, 1, 4, 0, false, false,
 			"Invert all PWM outputs", "For level shifters / drivers that invert."},
 
@@ -126,7 +126,7 @@ func buildRegMap() RegMap {
 		{16, "pin_clksel", "ctrl", 0x0B, 1, 1, 0, true, false,
 			"State of ui[2] clock select pin", "0 = 10 MHz defaults, 1 = 50 MHz defaults."},
 		{17, "pin_center", "ctrl", 0x0B, 1, 2, 0, true, false,
-			"State of ui[3] centre pin", "Live value of the hardware centre-all strap."},
+			"State of ui[1] centre pin", "Live value of the hardware centre-all strap."},
 		{18, "frame_tick", "ctrl", 0x0B, 1, 3, 0, true, false,
 			"High during the first ms of a frame", "Cheap heartbeat, proves the timebase runs."},
 	}

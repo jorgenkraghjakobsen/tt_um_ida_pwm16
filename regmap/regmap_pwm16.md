@@ -9,7 +9,7 @@
 | 0x01 | 7:0 | `ctrl.version` | RO | 0x01 | RTL version |
 | 0x02 | 0 | `ctrl.enable` | RW | 0x01 | Global PWM output enable |
 | 0x02 | 1 | `ctrl.servo_mode` | RW | 0x01 | 1=RC servo pulses, 0=plain PWM |
-| 0x02 | 2 | `ctrl.uart_tx_en` | RW | 0x01 | 1=uo[0] is uart_tx, 0=uo[0] is ch15 |
+| 0x02 | 2 | `ctrl.uart_tx_en` | RW | 0x01 | 1=uo[4] is uart_tx, 0=uo[4] is ch15 |
 | 0x02 | 3 | `ctrl.demo_en` | RW | 0x00 | Run the built in sweep generator |
 | 0x02 | 4 | `ctrl.invert` | RW | 0x00 | Invert all PWM outputs |
 | 0x03 | 0 | `ctrl.center_all` | W1S | 0x00 | Write 1: all channels back to 50% |
@@ -22,7 +22,7 @@
 | 0x0a | 7:0 | `ctrl.scratch` | RW | 0x00 | Scratch register |
 | 0x0b | 0 | `ctrl.pin_demo` | RO | 0x00 | State of ui[0] demo pin |
 | 0x0b | 1 | `ctrl.pin_clksel` | RO | 0x00 | State of ui[2] clock select pin |
-| 0x0b | 2 | `ctrl.pin_center` | RO | 0x00 | State of ui[3] centre pin |
+| 0x0b | 2 | `ctrl.pin_center` | RO | 0x00 | State of ui[1] centre pin |
 | 0x0b | 3 | `ctrl.frame_tick` | RO | 0x00 | High during the first ms of a frame |
 
 ## `pwm` @ 0x10 - The 16 channel position registers
