@@ -53,6 +53,7 @@ the data path stays transparent.
 
 import sys
 import select
+import time
 import micropython
 from machine import UART, Pin
 
@@ -73,28 +74,52 @@ HOLD_MS = 60      # give up on a partial match after this and forward it
 
 
 def setup_board(clock_hz=CLOCK_HZ, project=None):
-    """Do what main.py would have done: select the project and clock it."""
+    """Do what main.py would have done: select the project and clock it.
+
+    The reload has to be forced.  mpremote enters the raw REPL, which soft
+    resets the board and drops the FabricFox's configuration, but the project
+    mux still believes the design is enabled - so a plain enable() short
+    circuits and you are left with an unconfigured FPGA driving nothing.
+    Symptom: every project pin flat, including uart_tx, which should idle high
+    even while the design is in reset.
+    """
     from ttboard.boot.demoboard_detect import DemoboardDetect
     from ttboard.demoboard import DemoBoard
 
     DemoboardDetect.probe()
     tt = DemoBoard.get()
-    if project:
-        tt.shuttle.get(project).enable()
-    else:
-        tt.load_default_project()
+
+    name = project or tt.user_config.default_project
+    design = tt.shuttle.get(name)
+    try:
+        tt.shuttle.enable(design, force=True)
+    except TypeError:
+        # older SDK without the force argument
+        tt.shuttle.disable()
+        design.enable()
+
     if clock_hz:
         tt.clock_project_PWM(clock_hz)
-    return tt
+
+    # And pulse reset.  Configuring the FPGA is not enough on its own - the SDK
+    # only toggles project reset on its "first time loading" path, which has
+    # already fired earlier in the boot, so a re-enable leaves the design
+    # configured but never released.  Symptom: every pin flat, uart_tx included.
+    tt.reset_project(True)
+    time.sleep(0.2)
+    tt.reset_project(False)
+    time.sleep(0.1)
+    return tt, name
 
 
 def run(baudrate=BAUDRATE, clock_hz=CLOCK_HZ, project=None,
         uart_id=UART_ID, tx=TX_GPIO, rx=RX_GPIO, setup=True):
     """Pipe the USB CDC to the project UART until the board is reset."""
     tt = None
+    name = "?"
     if setup:
         try:
-            tt = setup_board(clock_hz, project)
+            tt, name = setup_board(clock_hz, project)
         except Exception as e:          # noqa: BLE001 - report and carry on
             print("%s %r" % (FAILED, e))
 
@@ -115,7 +140,7 @@ def run(baudrate=BAUDRATE, clock_hz=CLOCK_HZ, project=None,
 
     # Tell the host the noisy part is over and the stream is now transparent.
     if tt is not None:
-        print("%s clock=%s" % (READY, clock_hz))
+        print("%s project=%s clock=%s" % (READY, name, clock_hz))
     else:
         print("%s (no board setup)" % READY)
 

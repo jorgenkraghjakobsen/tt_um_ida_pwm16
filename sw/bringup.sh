@@ -42,12 +42,20 @@ for v in 00 a5 5a ff; do
     expect "scratch 0x$v" "$(rd ctrl.scratch)" "$v"
 done
 
-step "3. Reset state - every channel should sit at centre"
-centred=1
+step "3. Power-on state - every channel should sit at centre"
+# Only meaningful straight after a reset.  If you have already been driving the
+# chip this is expected to differ, so warn rather than fail.
+moved=""
 for ch in $(seq 0 15); do
-    [ "$(rd pwm.ch$ch | sed 's/^0x//')" = "80" ] || centred=0
+    v=$(rd pwm.ch$ch | sed 's/^0x//')
+    [ "$v" = "80" ] || moved="$moved ch$ch=0x$v"
 done
-[ $centred = 1 ] && ok "all 16 channels read 0x80" || bad "not all channels are at 0x80 (has something already moved them?)"
+if [ -z "$moved" ]; then
+    ok "all 16 channels read 0x80"
+else
+    printf '  \033[33mWARN\033[0m  not at reset values:%s\n' "$moved"
+    printf '        this only means anything straight after a reset - step 5 tests it properly\n'
+fi
 
 step "4. Block write and block read the whole channel section"
 $UCOM $OPTS w 0x10 0x10 0x20 0x30 0x40 0x50 0x60 0x70 0x80 \

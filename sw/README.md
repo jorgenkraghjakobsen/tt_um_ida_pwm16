@@ -33,9 +33,21 @@ ucom -p /dev/ttyACM0 r ctrl.chip_id      # -> 0x16
 detached, then waits for a `<<TT-UART-BRIDGE-READY>>` sentinel so the SDK's boot
 banner is drained out of the CDC buffer before anything talks registers.
 
-The script does the SDK startup itself - probe, enable the default project, start
-the clock - because `mpremote` enters the raw REPL, which skips `main.py`. Skip
-that and the project sits unselected and unclocked, with every PWM pin flat.
+The script does the SDK startup itself, because `mpremote` enters the raw REPL,
+which soft resets the board and skips `main.py`. Three things are needed, and
+all three were found the hard way with a logic analyser:
+
+1. **probe + `DemoBoard.get()`** - otherwise nothing is selected or clocked.
+2. **force the design re-enable** (`shuttle.enable(design, force=True)`). The
+   soft reset drops the FabricFox's configuration, but the project mux still
+   believes the design is enabled, so a plain `enable()` short circuits.
+3. **pulse project reset afterwards**. The SDK only toggles reset on its "first
+   time loading" path, which already fired during boot, so a re-enable leaves
+   the FPGA configured but never released.
+
+Miss any of them and every project pin sits flat - including `uart_tx`, which
+should idle high even while the design is held in reset. That flatness is the
+signature to look for.
 
 While the bridge runs there is no REPL on that port. To get it back:
 
