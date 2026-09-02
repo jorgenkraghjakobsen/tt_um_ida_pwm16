@@ -155,5 +155,18 @@ its own.
 
 Sixteen sliders with a live microsecond readout, the mode bits as buttons, a
 centre-all button and a host driven sine wave across all sixteen channels.
+
+Two things called "sweep" do different jobs, and it matters:
+
+| | who generates it | do the sliders move? |
+|---|---|---|
+| **Chip sweep** (`ctrl.demo_en`, or the `ui[0]` strap) | the chip, inside `pwm16.v` | **no** |
+| **Host wave** | the browser, written to the registers | yes |
+
+Chip sweep *bypasses* the channel registers - `value = demo ? sweep : duty[n]` -
+so `pwm.chN` still reads back whatever you last wrote and there is nothing for
+the UI to follow. That is the point of it: it proves the chip is alive with no
+host at all. The UI now says so and greys the sliders out while it is on,
+rather than looking broken.
 Dragging one slider is a single `W`; the presets and the wave push all sixteen
 in one block write, 19 bytes, so the servos move together.

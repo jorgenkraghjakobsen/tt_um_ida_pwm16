@@ -46,6 +46,9 @@
   code { background:#0e1218; padding:1px 5px; border-radius:4px; color:#b9c6d8; }
   .err { color:var(--bad); font-size:12px; }
   .pins { font-size:12px; color:var(--dim); }
+  .note { background:#2a2313; border:1px solid #5a4a1a; color:#ffd98a;
+          border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:13px; }
+  .channels.bypassed { opacity:.45; filter:saturate(.3); }
 </style>
 </head>
 <body>
@@ -65,13 +68,13 @@
       <button id="btnEnable">Output enable</button>
       <button id="btnServo">Servo mode</button>
       <button id="btnInvert">Invert</button>
-      <button id="btnDemo" class="danger">Chip demo sweep</button>
+      <button id="btnDemo" class="danger" title="ctrl.demo_en - the chip generates the sweep itself">Chip sweep</button>
       <span style="width:16px"></span>
       <button id="btnCenter">Centre all (1.5&nbsp;ms)</button>
       <button id="btnMin">All 1.0&nbsp;ms</button>
       <button id="btnMax">All 2.0&nbsp;ms</button>
       <span style="width:16px"></span>
-      <button id="btnWave">Host wave</button>
+      <button id="btnWave" title="computed in the browser and written to the channel registers">Host wave</button>
       <button id="btnAllOn">All channels on</button>
       <button id="btnAllOff">All channels off</button>
     </div>
@@ -81,6 +84,13 @@
   </div>
 
   <div class="panel">
+    <div id="demoNote" class="note" hidden>
+      <strong>Chip sweep is on.</strong> The sweep is generated inside
+      <code>pwm16.v</code> and <em>bypasses</em> the channel registers, so these
+      sliders are not driving anything and will not move &mdash; the registers
+      still hold whatever you last wrote. Turn it off to take control again, or
+      use <strong>Host wave</strong> for an animation the sliders follow.
+    </div>
     <div class="channels" id="channels"></div>
     <div class="row" style="margin-top:14px">
       <span class="pins">
@@ -153,6 +163,10 @@ function renderChannel(i) {
 
 function renderAll() {
   for (let i = 0; i < N; i++) renderChannel(i);
+  const demoOn = !!(state.cfg & 0x08);
+  $('demoNote').hidden = !demoOn;
+  $('channels').classList.toggle('bypassed', demoOn);
+  for (let i = 0; i < N; i++) $('sl'+i).disabled = demoOn;
   $('btnEnable').classList.toggle('on', !!(state.cfg & 0x01));
   $('btnServo').classList.toggle('on',  !!(state.cfg & 0x02));
   $('btnInvert').classList.toggle('on', !!(state.cfg & 0x10));
