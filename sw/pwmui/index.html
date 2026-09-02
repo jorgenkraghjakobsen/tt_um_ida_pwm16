@@ -229,7 +229,10 @@ async function loadPorts() {
   const sel = $('portsel');
   sel.innerHTML = '<option value="">auto detect</option>';
   (j.ports||[]).forEach(p => {
-    const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o);
+    const o = document.createElement('option');
+    o.value = p.name;
+    o.textContent = p.note ? `${p.name} — ${p.note}` : (p.product ? `${p.name} — ${p.product}` : p.name);
+    sel.appendChild(o);
   });
 }
 

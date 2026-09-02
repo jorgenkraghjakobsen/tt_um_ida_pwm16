@@ -13,6 +13,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -55,32 +58,119 @@ type Chip struct {
 	baud int
 }
 
-// ListPorts returns the serial ports on this machine, most likely candidate
-// first.  FTDI/Sipeed bridges and the TT demo board float to the top.
-func ListPorts() []string {
+// PortInfo describes one candidate serial port.
+type PortInfo struct {
+	Name    string `json:"name"`
+	Product string `json:"product"`
+	VID     string `json:"vid"`
+	PID     string `json:"pid"`
+	Note    string `json:"note"`
+	Score   int    `json:"-"`
+}
+
+// scoreUnusable is the threshold at or above which a port is something we
+// should never open on our own (a REPL, a modem, ...).
+const scoreUnusable = 8
+
+// classify scores a port: lower is a better candidate for talking to the chip.
+// The product string matters more than the VID.  A Raspberry Pi VID (2e8a) is
+// both a debugprobe UART bridge and a MicroPython REPL, and writing register
+// bytes into somebody's REPL is not a good time.
+func classify(product string) (int, string) {
+	p := strings.ToLower(product)
+	switch {
+	case strings.Contains(p, "micropython") || strings.Contains(p, "board in fs mode"):
+		return 9, "MicroPython REPL, not a project UART"
+	case strings.Contains(p, "debugprobe") || strings.Contains(p, "cmsis-dap"):
+		return 0, "debugprobe USB-UART bridge"
+	case strings.Contains(p, "uart") || strings.Contains(p, "usb-serial") ||
+		strings.Contains(p, "usb serial") || strings.Contains(p, "ft232") ||
+		strings.Contains(p, "ft2232") || strings.Contains(p, "cp210") ||
+		strings.Contains(p, "ch340") || strings.Contains(p, "ch910"):
+		return 1, "USB-serial adapter"
+	case strings.Contains(p, "modem") || strings.Contains(p, "quectel"):
+		return 8, "cellular modem"
+	}
+	return 5, ""
+}
+
+// productForPort digs out a human readable device name.  go.bug.st leaves
+// PortDetails.Product empty on Linux, but /dev/serial/by-id encodes the USB
+// product string in the symlink name, so use that when it is available.
+func productForPort(name string) string {
+	const byID = "/dev/serial/by-id"
+	entries, err := os.ReadDir(byID)
+	if err != nil {
+		return ""
+	}
+	for _, e := range entries {
+		link := filepath.Join(byID, e.Name())
+		target, err := filepath.EvalSymlinks(link)
+		if err != nil || target != name {
+			continue
+		}
+		label := e.Name()
+		label = strings.TrimPrefix(label, "usb-")
+		if i := strings.LastIndex(label, "-if"); i > 0 {
+			label = label[:i]
+		}
+		return strings.ReplaceAll(label, "_", " ")
+	}
+	return ""
+}
+
+// ListPorts returns the serial ports on this machine, best candidate first.
+func ListPorts() []PortInfo {
 	details, err := enumerator.GetDetailedPortsList()
 	if err != nil || len(details) == 0 {
 		plain, err2 := serial.GetPortsList()
 		if err2 != nil {
 			return nil
 		}
-		return plain
+		out := make([]PortInfo, 0, len(plain))
+		for _, n := range plain {
+			p := productForPort(n)
+			sc, note := classify(p)
+			out = append(out, PortInfo{Name: n, Product: p, Note: note, Score: sc})
+		}
+		return out
 	}
-	var likely, rest []string
+
+	type scored struct {
+		info  PortInfo
+		score int
+	}
+	list := []scored{}
 	for _, d := range details {
+		product := d.Product
+		if product == "" {
+			product = productForPort(d.Name)
+		}
+		score, note := classify(product)
 		if !d.IsUSB {
-			rest = append(rest, d.Name)
-			continue
+			score += 10
 		}
-		vid := strings.ToLower(d.VID)
-		switch vid {
-		case "0403", "2e8a", "1a86", "10c4": // FTDI, RP2040, CH34x, CP210x
-			likely = append(likely, d.Name)
-		default:
-			rest = append(rest, d.Name)
-		}
+		list = append(list, scored{
+			PortInfo{Name: d.Name, Product: product, VID: d.VID, PID: d.PID, Note: note, Score: score},
+			score,
+		})
 	}
-	return append(likely, rest...)
+	sort.SliceStable(list, func(i, j int) bool { return list[i].score < list[j].score })
+
+	out := make([]PortInfo, 0, len(list))
+	for _, s := range list {
+		out = append(out, s.info)
+	}
+	return out
+}
+
+// PortNames is the bare list, best candidate first.
+func PortNames() []string {
+	out := []string{}
+	for _, p := range ListPorts() {
+		out = append(out, p.Name)
+	}
+	return out
 }
 
 func Open(name string, baud int) (*Chip, error) {
@@ -89,7 +179,17 @@ func Open(name string, baud int) (*Chip, error) {
 		if len(ports) == 0 {
 			return nil, fmt.Errorf("no serial ports found")
 		}
-		name = ports[0]
+		if ports[0].Score >= scoreUnusable {
+			var seen []string
+			for _, p := range ports {
+				seen = append(seen, fmt.Sprintf("%s (%s)", p.Name, p.Note))
+			}
+			return nil, fmt.Errorf(
+				"no port looks like a project UART; I can only see %s. "+
+					"Plug in a USB-serial bridge, or pass -port explicitly",
+				strings.Join(seen, ", "))
+		}
+		name = ports[0].Name
 	}
 	p, err := serial.Open(name, &serial.Mode{
 		BaudRate: baud,

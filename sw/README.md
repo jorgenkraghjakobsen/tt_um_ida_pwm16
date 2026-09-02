@@ -14,6 +14,52 @@ Everything here speaks the same four byte-oriented commands that
 Tapeout's [recommended UART pinout](https://tinytapeout.com/specs/pinouts/),
 which lands on the demo board RP2350's hardware UART1 in both directions.
 
+## Getting a serial port to the chip
+
+The design's UART is on `ui[3]` (RX) and `uo[4]` (TX) at 3.3 V. You need
+something that turns those two pins into a USB serial port.
+
+### Option A - an RP2040/RP2350 board as a USB-UART bridge
+
+Any Pico-class board works. Flash Raspberry Pi's `debugprobe` firmware and it
+enumerates as a clean USB CDC serial port, no code to write:
+
+1. Grab the UF2 for your chip - `debugprobe_on_pico2.uf2` for RP2350 (Pico 2,
+   Waveshare RP2350-Zero, ...), `debugprobe_on_pico.uf2` for RP2040 - from
+   <https://github.com/raspberrypi/debugprobe/releases>.
+2. Hold **BOOT** while plugging in the USB-C cable. The `RPI-RP2` drive appears.
+3. Copy the UF2 onto it. The board reboots as
+   `Raspberry Pi Debugprobe on Pico (CMSIS-DAP)`.
+
+Wiring - the firmware puts the bridge on GP4/GP5:
+
+| RP2350-Zero | direction | design pin |
+|-------------|-----------|------------|
+| `GP4` UART TX | ──► | `ui[3]` uart_rx |
+| `GP5` UART RX | ◄── | `uo[4]` uart_tx |
+| `GND` | ─── | `GND` |
+
+Leave `5V` and `3V3` disconnected - the target powers itself. The ground wire
+is not optional.
+
+### Option B - any USB-serial adapter
+
+An FTDI/CP210x/CH340 cable on the same two pins plus ground. Same thing, fewer
+steps, if you have one spare.
+
+### What not to use
+
+The TT demo board's `/dev/ttyACM0` is the **RP2350's MicroPython REPL**, not a
+project UART - there is no UART bridge in the stock TT firmware. Writing
+register bytes into it just confuses the REPL. `pwmui` knows this and will
+refuse to auto-select it:
+
+```
+no port looks like a project UART; I can only see /dev/ttyUSB0 (cellular modem),
+/dev/ttyACM0 (MicroPython REPL, not a project UART). Plug in a USB-serial
+bridge, or pass -port explicitly
+```
+
 ## ucom, the command line
 
 [`ucom`](https://github.com/jorgenkraghjakobsen/ucom) finds `.reg_file_pwm16`
@@ -38,9 +84,14 @@ the FPGA build, then again on the chip - the output should be identical.
 ```bash
 cd sw/pwmui
 go run .                       # auto detect the port, serve http://localhost:8080
-go run . -port /dev/ttyUSB1
+go run . -port /dev/ttyACM1
 go run . -demo                 # no hardware, just look at the UI
 ```
+
+Auto detect ranks ports by what they actually are, reading the USB product
+string out of `/dev/serial/by-id`: a debugprobe bridge wins, a plain USB-serial
+adapter is next, and a MicroPython REPL or a cellular modem is never chosen on
+its own.
 
 Sixteen sliders with a live microsecond readout, the mode bits as buttons, a
 centre-all button and a host driven sine wave across all sixteen channels.
