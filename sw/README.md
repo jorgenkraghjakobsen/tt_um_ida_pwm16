@@ -19,7 +19,28 @@ which lands on the demo board RP2350's hardware UART1 in both directions.
 The design's UART is on `ui[3]` (RX) and `uo[4]` (TX) at 3.3 V. You need
 something that turns those two pins into a USB serial port.
 
-### Option A - an RP2040/RP2350 board as a USB-UART bridge
+### Option A - the TT demo board itself (no wiring at all)
+
+`ui[3]`/`uo[4]` land on the demo board RP2350's hardware UART1 (GPIO20/GPIO37),
+so the board can be its own bridge:
+
+```bash
+sw/ttbridge/start_bridge.sh /dev/ttyACM0 10000000
+ucom -p /dev/ttyACM0 r ctrl.chip_id      # -> 0x16
+```
+
+`start_bridge.sh` copies `tt_uart_bridge.py` onto the board and starts it
+detached, then waits for a `<<TT-UART-BRIDGE-READY>>` sentinel so the SDK's boot
+banner is drained out of the CDC buffer before anything talks registers.
+
+The script does the SDK startup itself - probe, enable the default project, start
+the clock - because `mpremote` enters the raw REPL, which skips `main.py`. Skip
+that and the project sits unselected and unclocked, with every PWM pin flat.
+
+While the bridge runs there is no REPL on that port. **Press RUN on the demo
+board to get it back.**
+
+### Option B - an RP2040/RP2350 board as a USB-UART bridge
 
 Any Pico-class board works. Flash Raspberry Pi's `debugprobe` firmware and it
 enumerates as a clean USB CDC serial port, no code to write:
@@ -42,23 +63,33 @@ Wiring - the firmware puts the bridge on GP4/GP5:
 Leave `5V` and `3V3` disconnected - the target powers itself. The ground wire
 is not optional.
 
-### Option B - any USB-serial adapter
+### Option C - any USB-serial adapter
 
 An FTDI/CP210x/CH340 cable on the same two pins plus ground. Same thing, fewer
 steps, if you have one spare.
 
-### What not to use
+### How the tools find the port
 
-The TT demo board's `/dev/ttyACM0` is the **RP2350's MicroPython REPL**, not a
-project UART - there is no UART bridge in the stock TT firmware. Writing
-register bytes into it just confuses the REPL. `pwmui` knows this and will
-refuse to auto-select it:
+Out of the box the demo board's `/dev/ttyACM0` is the RP2350's MicroPython
+REPL, and writing register bytes into a REPL just confuses it. But once
+`tt_uart_bridge.py` is running, that *same* device node is the project UART -
+the USB descriptor is identical either way.
+
+So `pwmui` does not trust USB metadata. It ranks the ports (a debugprobe first,
+then a plain USB-serial adapter, then anything that might be a bridged
+MicroPython board) and then **asks each one for `ctrl.chip_id`**, keeping the
+first that answers `0x16`. Ports that are obviously something else, like a
+cellular modem, are never even poked. If nothing answers it says exactly what
+it tried:
 
 ```
-no port looks like a project UART; I can only see /dev/ttyUSB0 (cellular modem),
-/dev/ttyACM0 (MicroPython REPL, not a project UART). Plug in a USB-serial
-bridge, or pass -port explicitly
+no chip yet (no port answered with chip_id 0x16: /dev/ttyACM0 did not answer;
+/dev/ttyUSB0 skipped (cellular modem))
+retrying every 3s - start the bridge and it will pick it up
 ```
+
+and it keeps retrying, so you can leave the UI running and bring the bridge up
+afterwards.
 
 ## ucom, the command line
 

@@ -17,6 +17,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 //go:embed index.html
@@ -34,6 +35,7 @@ type server struct {
 	version  byte
 	identOK  bool
 	baudRate int
+	port     string // what -port asked for, "" means auto
 }
 
 func main() {
@@ -53,11 +55,14 @@ func main() {
 		s.values[i] = 0x80
 	}
 
+	s.port = *port
 	if !*demo {
 		if err := s.connect(*port, *baud); err != nil {
-			log.Printf("no chip yet (%v) - the UI will keep trying, "+
-				"or start with -demo to look around", err)
+			log.Printf("no chip yet (%v)", err)
+			log.Printf("retrying every 3s - start the bridge and it will pick it up, " +
+				"or run with -demo to look around")
 		}
+		go s.reconnectLoop()
 	}
 
 	mux := http.NewServeMux()
@@ -75,6 +80,52 @@ func main() {
 		log.Printf("chip on %s at %d baud", s.chip.Name(), s.chip.Baud())
 	}
 	log.Fatal(http.ListenAndServe(*addr, mux))
+}
+
+// reconnectLoop keeps looking for the chip so you can start the UI first and
+// bring the bridge up afterwards.
+func (s *server) reconnectLoop() {
+	for range time.Tick(3 * time.Second) {
+		s.mu.Lock()
+		need := s.chip == nil && !s.offline
+		port, baud := s.port, s.baudRate
+		s.mu.Unlock()
+		if !need {
+			continue
+		}
+		c, err := Open(port, baud)
+		if err != nil {
+			continue
+		}
+		s.mu.Lock()
+		if s.chip == nil {
+			s.chip = c
+			s.adopt(c)
+			log.Printf("chip found on %s at %d baud", c.Name(), c.Baud())
+		} else {
+			c.Close()
+		}
+		s.mu.Unlock()
+	}
+}
+
+// adopt pulls the live state off a freshly opened chip. Caller holds the lock.
+func (s *server) adopt(c *Chip) {
+	s.lastErr = ""
+	if id, ver, err := c.Identify(); err == nil {
+		s.chipID, s.version, s.identOK = id, ver, id == ExpectedChipID
+	}
+	if vals, err := c.Channels(); err == nil && len(vals) == NumChannels {
+		copy(s.values[:], vals)
+	}
+	if cfg, err := c.Read(RegCfg); err == nil {
+		s.cfg = cfg
+	}
+	if lo, err := c.Read(RegChanEnL); err == nil {
+		if hi, err := c.Read(RegChanEnH); err == nil {
+			s.chanEn = uint16(lo) | uint16(hi)<<8
+		}
+	}
 }
 
 func (s *server) connect(port string, baud int) error {
@@ -189,6 +240,7 @@ func (s *server) handleConnect(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.offline = false
+	s.port = req.Port
 	err := s.connect(req.Port, req.Baud)
 	writeJSON(w, map[string]interface{}{"ok": err == nil, "error": s.lastErr})
 }

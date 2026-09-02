@@ -68,9 +68,9 @@ type PortInfo struct {
 	Score   int    `json:"-"`
 }
 
-// scoreUnusable is the threshold at or above which a port is something we
-// should never open on our own (a REPL, a modem, ...).
-const scoreUnusable = 8
+// scoreNeverProbe marks a port we must not even poke at - writing bytes into a
+// cellular modem's command channel is nobody's idea of a good time.
+const scoreNeverProbe = 20
 
 // classify scores a port: lower is a better candidate for talking to the chip.
 // The product string matters more than the VID.  A Raspberry Pi VID (2e8a) is
@@ -79,8 +79,6 @@ const scoreUnusable = 8
 func classify(product string) (int, string) {
 	p := strings.ToLower(product)
 	switch {
-	case strings.Contains(p, "micropython") || strings.Contains(p, "board in fs mode"):
-		return 9, "MicroPython REPL, not a project UART"
 	case strings.Contains(p, "debugprobe") || strings.Contains(p, "cmsis-dap"):
 		return 0, "debugprobe USB-UART bridge"
 	case strings.Contains(p, "uart") || strings.Contains(p, "usb-serial") ||
@@ -88,8 +86,13 @@ func classify(product string) (int, string) {
 		strings.Contains(p, "ft2232") || strings.Contains(p, "cp210") ||
 		strings.Contains(p, "ch340") || strings.Contains(p, "ch910"):
 		return 1, "USB-serial adapter"
+	case strings.Contains(p, "micropython") || strings.Contains(p, "board in fs mode"):
+		// Could be a bare MicroPython REPL, or a TT demo board running
+		// tt_uart_bridge - the USB descriptor is identical either way, so the
+		// only way to tell is to ask the chip.
+		return 7, "MicroPython REPL, or a TT demo board running tt_uart_bridge"
 	case strings.Contains(p, "modem") || strings.Contains(p, "quectel"):
-		return 8, "cellular modem"
+		return scoreNeverProbe, "cellular modem"
 	}
 	return 5, ""
 }
@@ -173,24 +176,53 @@ func PortNames() []string {
 	return out
 }
 
+// Open connects to a named port, or auto-detects when name is empty or "auto".
 func Open(name string, baud int) (*Chip, error) {
 	if name == "" || name == "auto" {
-		ports := ListPorts()
-		if len(ports) == 0 {
-			return nil, fmt.Errorf("no serial ports found")
-		}
-		if ports[0].Score >= scoreUnusable {
-			var seen []string
-			for _, p := range ports {
-				seen = append(seen, fmt.Sprintf("%s (%s)", p.Name, p.Note))
-			}
-			return nil, fmt.Errorf(
-				"no port looks like a project UART; I can only see %s. "+
-					"Plug in a USB-serial bridge, or pass -port explicitly",
-				strings.Join(seen, ", "))
-		}
-		name = ports[0].Name
+		return AutoDetect(baud)
 	}
+	return openPort(name, baud)
+}
+
+// AutoDetect walks the plausible ports in rank order and keeps the first one
+// that answers with the right chip id.
+//
+// Metadata alone is not enough: a TT demo board running tt_uart_bridge presents
+// exactly the same USB descriptor as a bare MicroPython REPL, and a Raspberry Pi
+// VID is both a debugprobe and a Pico. So ask the chip who it is.
+func AutoDetect(baud int) (*Chip, error) {
+	ports := ListPorts()
+	if len(ports) == 0 {
+		return nil, fmt.Errorf("no serial ports found")
+	}
+	var tried []string
+	for _, p := range ports {
+		if p.Score >= scoreNeverProbe {
+			tried = append(tried, fmt.Sprintf("%s skipped (%s)", p.Name, p.Note))
+			continue
+		}
+		c, err := openPort(p.Name, baud)
+		if err != nil {
+			tried = append(tried, fmt.Sprintf("%s could not be opened (%v)", p.Name, err))
+			continue
+		}
+		id, err := c.Read(RegChipID)
+		switch {
+		case err != nil:
+			tried = append(tried, fmt.Sprintf("%s did not answer", p.Name))
+		case id == ExpectedChipID:
+			return c, nil
+		default:
+			tried = append(tried, fmt.Sprintf("%s answered 0x%02X, not 0x%02X",
+				p.Name, id, ExpectedChipID))
+		}
+		c.Close()
+	}
+	return nil, fmt.Errorf("no port answered with chip_id 0x%02X: %s",
+		ExpectedChipID, strings.Join(tried, "; "))
+}
+
+func openPort(name string, baud int) (*Chip, error) {
 	p, err := serial.Open(name, &serial.Mode{
 		BaudRate: baud,
 		Parity:   serial.NoParity,
