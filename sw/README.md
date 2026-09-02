@@ -37,8 +37,25 @@ The script does the SDK startup itself - probe, enable the default project, star
 the clock - because `mpremote` enters the raw REPL, which skips `main.py`. Skip
 that and the project sits unselected and unclocked, with every PWM pin flat.
 
-While the bridge runs there is no REPL on that port. **Press RUN on the demo
-board to get it back.**
+While the bridge runs there is no REPL on that port. To get it back:
+
+```bash
+sw/ttbridge/stop_bridge.sh /dev/ttyACM0
+```
+
+**The demo board's reset button will not help** - it resets the *project*
+(`rst_n`), not the RP2350, so the bridge keeps running. Failing the escape
+sequence, unplug and replug the USB-C.
+
+The escape is only looked for at the start of a burst: after 250 ms of silence,
+and its first byte is `0x00`, which is never a command opcode. So real traffic
+is never even held back, and a block write whose *data* contains the escape
+bytes passes through untouched. `sw/ttbridge/test_escape.py` checks exactly
+that:
+
+```bash
+python3 sw/ttbridge/test_escape.py
+```
 
 ### Option B - an RP2040/RP2350 board as a USB-UART bridge
 

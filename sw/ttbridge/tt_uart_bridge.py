@@ -30,13 +30,25 @@ sw/ttbridge/start_bridge.sh does all of that for you.
 
 While the bridge runs there is NO REPL - the port carries raw binary in both
 directions, and Ctrl-C is disabled so that a 0x03 data byte reaches the chip
-instead of raising KeyboardInterrupt.  Press RUN on the demo board (or unplug
-it) to get the REPL back.
+instead of raising KeyboardInterrupt.
 
-There is deliberately no escape sequence.  The register protocol carries
-arbitrary binary, so any magic byte pattern could also be real data, and a
-bridge that silently ate one register write would be far more painful to debug
-than pressing a button.
+Getting out
+-----------
+Send the escape sequence (sw/ttbridge/stop_bridge.sh) and the bridge exits back
+to the REPL.  Failing that, unplug and replug the USB-C: note that the demo
+board's reset button resets the *project*, not the RP2350, so it will not stop
+the bridge.
+
+The escape is safe against being triggered by real register traffic, because it
+is only ever looked for at the start of a burst:
+
+  * it is only considered after >= IDLE_MS of silence from the host, so it can
+    never match bytes in the middle of a command, and
+  * its first byte is 0x00, which is not one of the command opcodes
+    ('W' 'w' 'R' 'r' 'B' 'b'), so a real command is never even held back.
+
+If a held prefix turns out not to be the escape, it is forwarded unchanged, so
+the data path stays transparent.
 """
 
 import sys
@@ -52,6 +64,12 @@ CLOCK_HZ = 10_000_000
 
 READY = "<<TT-UART-BRIDGE-READY>>"
 FAILED = "<<TT-UART-BRIDGE-SETUP-FAILED>>"
+
+# Escape sequence, only honoured at the start of a burst.  First byte is 0x00,
+# which is never a command opcode, so normal traffic is never held back.
+ESCAPE = b"\x00\xffTTBRK!"
+IDLE_MS = 250     # silence required before the escape is considered
+HOLD_MS = 60      # give up on a partial match after this and forward it
 
 
 def setup_board(clock_hz=CLOCK_HZ, project=None):
@@ -110,6 +128,12 @@ def run(baudrate=BAUDRATE, clock_hz=CLOCK_HZ, project=None,
     stdin = sys.stdin.buffer
     stdout = sys.stdout.buffer
 
+    from time import ticks_ms, ticks_diff
+
+    held = b""              # partial escape match, not yet forwarded
+    held_at = 0
+    last_rx = ticks_ms()
+
     try:
         while True:
             # host -> project
@@ -117,11 +141,36 @@ def run(baudrate=BAUDRATE, clock_hz=CLOCK_HZ, project=None,
                 b = stdin.read(1)
                 if not b:
                     break
+                now = ticks_ms()
+                idle = ticks_diff(now, last_rx) >= IDLE_MS
+                last_rx = now
+
+                if held:
+                    if ESCAPE.startswith(held + b):
+                        held += b
+                        held_at = now
+                        if held == ESCAPE:
+                            return          # finally: restores kbd_intr
+                        continue
+                    uart.write(held)        # not the escape after all
+                    held = b""
+                elif idle and b == ESCAPE[0:1]:
+                    held = b
+                    held_at = now
+                    continue
+
                 uart.write(b)
+
+            # a partial escape that stalled is just data
+            if held and ticks_diff(ticks_ms(), held_at) > HOLD_MS:
+                uart.write(held)
+                held = b""
 
             # project -> host
             n = uart.any()
             if n:
                 stdout.write(uart.read(n))
     finally:
+        if held:
+            uart.write(held)
         micropython.kbd_intr(3)
